@@ -16,7 +16,6 @@ linters-settings:
           - "!$test"
         allow:
           - $gostd
-          - github.com/cheggaaa/pb/v3
       Test:
         files:
           - $test
@@ -43,7 +42,7 @@ linters:
     - durationcheck
     - errorlint
     - exhaustive
-    - exportloopref
+    - copyloopvar
     - funlen
     - gci
     - gocognit
