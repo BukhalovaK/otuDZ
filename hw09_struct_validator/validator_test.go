@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -22,12 +24,15 @@ type (
 
 	App struct {
 		Version string `validate:"len:5"`
+		name    string `validate:"in:myApp"`
+		Cost    int    `validate:"minimum:20"`
 	}
 
 	Token struct {
 		Header    []byte
 		Payload   []byte
 		Signature []byte
+		Footer    string `validate:""`
 	}
 
 	Response struct {
@@ -42,10 +47,32 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in: User{ID: "12345678", Name: "Alex", Age: 30, Email: "alex@qwerty..com.", Role: "user"},
+			expectedErr: ValidationErrors{
+				{Field: "ID", Err: ErrLen},
+				{Field: "Email", Err: ErrRegexp},
+				{Field: "Role", Err: ErrIn},
+			},
 		},
-		// ...
-		// Place your code here.
+		{
+			in:          App{Version: "1.2.3", name: "game", Cost: 21},
+			expectedErr: ValidationErrors{{Field: "Cost", Err: ErrValidator}},
+		},
+		{
+			in:          Token{},
+			expectedErr: ErrTag,
+		},
+		{
+			in: Response{Code: 200},
+		},
+		{
+			in:          Response{Code: 532},
+			expectedErr: ValidationErrors{{Field: "Code", Err: ErrIn}},
+		},
+		{
+			in:          "qwerty",
+			expectedErr: ErrStruct,
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,7 +80,8 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
+			err := Validate(tt.in)
+			require.Equal(t, tt.expectedErr, err)
 			_ = tt
 		})
 	}
