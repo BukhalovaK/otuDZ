@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -61,5 +62,24 @@ func TestTelnetClient(t *testing.T) {
 		}()
 
 		wg.Wait()
+	})
+
+	t.Run("forbidden ip", func(t *testing.T) {
+		timeout := 5 * time.Second
+		client := NewTelnetClient("123.45.0.1:6789", timeout, os.Stdin, os.Stdout)
+		err := client.Connect()
+		require.EqualError(t, err, "dial tcp 123.45.0.1:6789: i/o timeout")
+	})
+
+	t.Run("timeout", func(t *testing.T) {
+		timeout := 5 * time.Second
+		client := NewTelnetClient("123.45.0.1:6789", timeout, os.Stdin, os.Stdout)
+
+		start := time.Now()
+		client.Connect()
+		elapsed := time.Since(start)
+
+		tolerance := 10 * time.Millisecond
+		require.InDelta(t, float64(timeout), float64(elapsed), float64(tolerance))
 	})
 }
